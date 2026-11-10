@@ -323,3 +323,401 @@ def gameOver(score):
                     return True
 
         clock.tick(FPS)
+
+
+def main():
+
+    running = True
+
+    lives = 3
+    score = 0
+    level = 1
+
+    combo = 0
+
+    lastHitTime = 0
+    comboDuration = 2500
+
+    striker = Striker(
+        250, HEIGHT - 50,
+        100, 20, 10, WHITE
+    )
+
+    strikerXFac = 0
+
+    ball = Ball(
+        WIDTH // 2, HEIGHT - 100,
+        7, 5, WHITE
+    )
+
+    blockWidth, blockHeight = 40, 15
+    horizontalGap, verticalGap = 20, 20
+
+    listOfBlocks = populateBlocks(
+        blockWidth,
+        blockHeight,
+        horizontalGap,
+        verticalGap
+    )
+
+    powerUps = []
+
+    # Power-up timers
+    wideTimer = 0
+    slowTimer = 0
+
+    normalBallSpeed = 5
+
+    # Game loop
+    while running:
+
+        screen.fill(BLACK)
+
+        currentTime = pygame.time.get_ticks()
+
+        # =================================
+        # HUD
+        # =================================
+
+        scoreText = font.render(
+            "Score : " + str(score),
+            True, WHITE
+        )
+
+        livesText = font.render(
+            "Lives : " + str(lives),
+            True, WHITE
+        )
+
+        levelText = font.render(
+            "Level : " + str(level),
+            True, WHITE
+        )
+
+        comboText = font.render(
+            "Combo : x" + str(min(combo, 5)),
+            True, YELLOW
+        )
+
+        screen.blit(scoreText, (10, HEIGHT - 25))
+        screen.blit(livesText, (120, HEIGHT - 25))
+        screen.blit(levelText, (220, HEIGHT - 25))
+        screen.blit(comboText, (320, HEIGHT - 25))
+
+        # =================================
+        # COMBO TIMER
+        # =================================
+
+        if currentTime - lastHitTime > comboDuration:
+            combo = 0
+
+        # =================================
+        # POWER-UP TIMER
+        # =================================
+
+        if wideTimer > 0 and currentTime >= wideTimer:
+
+            striker.changeWidth(100)
+            wideTimer = 0
+
+        if slowTimer > 0 and currentTime >= slowTimer:
+
+            ball.setSpeed(normalBallSpeed)
+            slowTimer = 0
+
+        # =================================
+        # LEVEL SYSTEM
+        # =================================
+
+        if not listOfBlocks:
+
+            level += 1
+
+            listOfBlocks = populateBlocks(
+                blockWidth,
+                blockHeight,
+                horizontalGap,
+                verticalGap
+            )
+
+            normalBallSpeed = min(
+                9, normalBallSpeed + 0.5
+            )
+
+            ball.setSpeed(normalBallSpeed)
+
+            combo = 0
+
+        # =================================
+        # GAME OVER
+        # =================================
+
+        if lives <= 0:
+
+            running = gameOver(score)
+
+            if not running:
+                break
+
+            lives = 3
+            score = 0
+            level = 1
+            combo = 0
+
+            striker.changeWidth(100)
+
+            ball.reset()
+
+            normalBallSpeed = 5
+            ball.setSpeed(normalBallSpeed)
+
+            wideTimer = 0
+            slowTimer = 0
+
+            powerUps.clear()
+
+            listOfBlocks = populateBlocks(
+                blockWidth,
+                blockHeight,
+                horizontalGap,
+                verticalGap
+            )
+
+            continue
+
+        # =================================
+        # EVENT HANDLING
+        # =================================
+
+        for event in pygame.event.get():
+
+            if event.type == pygame.QUIT:
+                running = False
+
+            if event.type == pygame.KEYDOWN:
+
+                if event.key == pygame.K_LEFT:
+                    strikerXFac = -1
+
+                if event.key == pygame.K_RIGHT:
+                    strikerXFac = 1
+
+            if event.type == pygame.KEYUP:
+
+                if event.key in (
+                    pygame.K_LEFT,
+                    pygame.K_RIGHT
+                ):
+
+                    strikerXFac = 0
+
+        if not running:
+            break
+
+        # =================================
+        # UPDATE STRIKER
+        # =================================
+
+        striker.update(strikerXFac)
+
+        # =================================
+        # UPDATE BALL
+        # =================================
+
+        lifeLost = ball.update()
+
+        # =================================
+        # PADDLE COLLISION
+        # =================================
+
+        if (
+            collisionChecker(
+                striker.getRect(),
+                ball.getRect()
+            )
+            and ball.yFac > 0
+        ):
+
+            ball.posy = (
+                striker.posy - ball.radius - 1
+            )
+
+            hitPosition = (
+                ball.posx - striker.getRect().centerx
+            ) / (striker.width / 2)
+
+            ball.xFac = max(-0.9, min(0.9, hitPosition))
+
+            ball.yFac = -math.sqrt(
+                1 - ball.xFac ** 2
+            )
+
+        # =================================
+        # BLOCK COLLISION
+        # =================================
+
+        for block in listOfBlocks[:]:
+
+            if collisionChecker(
+                block.getRect(),
+                ball.getRect()
+            ):
+
+                # Calculate collision direction
+                overlapLeft = (
+                    ball.getRect().right -
+                    block.getRect().left
+                )
+
+                overlapRight = (
+                    block.getRect().right -
+                    ball.getRect().left
+                )
+
+                overlapTop = (
+                    ball.getRect().bottom -
+                    block.getRect().top
+                )
+
+                overlapBottom = (
+                    block.getRect().bottom -
+                    ball.getRect().top
+                )
+
+                minOverlapX = min(
+                    overlapLeft, overlapRight
+                )
+
+                minOverlapY = min(
+                    overlapTop, overlapBottom
+                )
+
+                if minOverlapX < minOverlapY:
+                    ball.xFac *= -1
+                else:
+                    ball.yFac *= -1
+
+                block.hit()
+
+                if block.getHealth() <= 0:
+
+                    listOfBlocks.remove(block)
+
+                    # COMBO SYSTEM
+                    if currentTime - lastHitTime <= comboDuration:
+                        combo += 1
+                    else:
+                        combo = 1
+
+                    lastHitTime = currentTime
+
+                    multiplier = min(combo, 5)
+
+                    score += 5 * multiplier
+
+                    # POWER-UP DROP
+                    if random.random() < 0.25:
+
+                        powerType = random.choice([
+                            "wide",
+                            "slow",
+                            "life"
+                        ])
+
+                        powerUps.append(
+                            PowerUp(
+                                block.getRect().centerx,
+                                block.getRect().centery,
+                                powerType
+                            )
+                        )
+
+                break
+
+        # =================================
+        # POWER-UP UPDATE
+        # =================================
+
+        for power in powerUps[:]:
+
+            power.update()
+
+            if collisionChecker(
+                striker.getRect(),
+                power.getRect()
+            ):
+
+                if power.powerType == "wide":
+
+                    striker.changeWidth(160)
+
+                    wideTimer = currentTime + 8000
+
+                elif power.powerType == "slow":
+
+                    ball.setSpeed(3)
+
+                    slowTimer = currentTime + 8000
+
+                elif power.powerType == "life":
+
+                    lives += 1
+
+                powerUps.remove(power)
+
+            elif power.posy > HEIGHT:
+
+                powerUps.remove(power)
+
+        # =================================
+        # LIFE LOST
+        # =================================
+
+        if lifeLost:
+
+            lives -= 1
+
+            ball.reset()
+
+            combo = 0
+            lastHitTime = 0
+
+        # =================================
+        # DISPLAY
+        # =================================
+
+        striker.display()
+        ball.display()
+
+        for block in listOfBlocks:
+            block.display()
+
+        for power in powerUps:
+            power.display()
+
+        # Active effect indicators
+        if wideTimer > currentTime:
+
+            effectText = font.render(
+                "WIDE PADDLE ACTIVE",
+                True, BLUE
+            )
+
+            screen.blit(
+                effectText, (WIDTH - 190, HEIGHT - 45)
+            )
+
+        if slowTimer > currentTime:
+
+            effectText = font.render(
+                "SLOW BALL ACTIVE",
+                True, YELLOW
+            )
+
+            screen.blit(
+                effectText, (WIDTH - 190, HEIGHT - 65)
+            )
+
+        pygame.display.update()
+
+        clock.tick(FPS)
