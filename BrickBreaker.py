@@ -69,3 +69,122 @@ class Striker:
 
     def getRect(self):
         return self.strikerRect
+
+
+# =====================================
+# BLOCK CLASS
+# =====================================
+
+class Block:
+
+    def __init__(self, posx, posy, width, height, color):
+        self.posx, self.posy = posx, posy
+        self.width, self.height = width, height
+        self.color = color
+
+        self.damage = 100
+
+        if color == WHITE:
+            self.health = 200
+        else:
+            self.health = 100
+
+        self.blockRect = pygame.Rect(
+            self.posx, self.posy, self.width, self.height
+        )
+
+    def display(self):
+        if self.health > 0:
+            pygame.draw.rect(
+                screen, self.color, self.blockRect
+            )
+
+    def hit(self):
+        self.health -= self.damage
+
+    def getRect(self):
+        return self.blockRect
+
+    def getHealth(self):
+        return self.health
+
+class Ball:
+
+    def __init__(self, posx, posy, radius, speed, color):
+        self.posx, self.posy = posx, posy
+        self.radius = radius
+        self.speed = speed
+        self.color = color
+
+        self.xFac, self.yFac = 1, -1
+
+        self.ball = pygame.Rect(
+            self.posx - radius,
+            self.posy - radius,
+            radius * 2,
+            radius * 2
+        )
+
+    def display(self):
+        pygame.draw.circle(
+            screen,
+            self.color,
+            (int(self.posx), int(self.posy)),
+            self.radius
+        )
+
+        self.ball.center = (
+            int(self.posx), int(self.posy)
+        )
+
+    def update(self):
+        self.posx += self.xFac * self.speed
+        self.posy += self.yFac * self.speed
+
+        # Left and right wall
+        if self.posx - self.radius <= 0:
+            self.posx = self.radius
+            self.xFac = abs(self.xFac)
+
+        elif self.posx + self.radius >= WIDTH:
+            self.posx = WIDTH - self.radius
+            self.xFac = -abs(self.xFac)
+
+        # Top wall
+        if self.posy - self.radius <= 0:
+            self.posy = self.radius
+            self.yFac = abs(self.yFac)
+
+        # Bottom wall
+        if self.posy - self.radius >= HEIGHT:
+            return True
+
+        self.ball.center = (
+            int(self.posx), int(self.posy)
+        )
+
+        return False
+
+    def reset(self):
+        self.posx = WIDTH // 2
+        self.posy = HEIGHT - 100
+
+        self.xFac = random.choice([-1, 1])
+        self.yFac = -1
+
+        self.ball.center = (
+            int(self.posx), int(self.posy)
+        )
+
+    def hit(self):
+        self.yFac *= -1
+
+    def setSpeed(self, newSpeed):
+        self.speed = newSpeed
+
+    def getRect(self):
+        self.ball.center = (
+            int(self.posx), int(self.posy)
+        )
+
+        return self.ball
