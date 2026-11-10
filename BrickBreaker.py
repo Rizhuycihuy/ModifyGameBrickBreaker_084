@@ -243,3 +243,83 @@ class PowerUp:
     def getRect(self):
         return self.rect
 
+def collisionChecker(rect, ball):
+    return rect.colliderect(ball)
+
+
+def populateBlocks(blockWidth, blockHeight,
+                  horizontalGap, verticalGap):
+
+    listOfBlocks = []
+
+    for i in range(0, WIDTH, blockWidth + horizontalGap):
+
+        for j in range(0, HEIGHT // 2,
+                      blockHeight + verticalGap):
+
+            listOfBlocks.append(
+                Block(
+                    i, j,
+                    blockWidth,
+                    blockHeight,
+                    random.choice([WHITE, GREEN])
+                )
+            )
+
+    return listOfBlocks
+
+
+def gameOver(score):
+
+    while True:
+
+        screen.fill(BLACK)
+
+        title = bigFont.render(
+            "GAME OVER", True, RED
+        )
+
+        scoreText = font.render(
+            "Final Score : " + str(score),
+            True, WHITE
+        )
+
+        restartText = font.render(
+            "Press SPACE to restart",
+            True, GREEN
+        )
+
+        screen.blit(
+            title,
+            title.get_rect(
+                center=(WIDTH // 2, 180)
+            )
+        )
+
+        screen.blit(
+            scoreText,
+            scoreText.get_rect(
+                center=(WIDTH // 2, 240)
+            )
+        )
+
+        screen.blit(
+            restartText,
+            restartText.get_rect(
+                center=(WIDTH // 2, 290)
+            )
+        )
+
+        pygame.display.update()
+
+        for event in pygame.event.get():
+
+            if event.type == pygame.QUIT:
+                return False
+
+            if event.type == pygame.KEYDOWN:
+
+                if event.key == pygame.K_SPACE:
+                    return True
+
+        clock.tick(FPS)
