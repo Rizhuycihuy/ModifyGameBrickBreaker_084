@@ -188,3 +188,61 @@ class Ball:
         )
 
         return self.ball
+
+class PowerUp:
+
+    def __init__(self, posx, posy, powerType):
+        self.posx = posx
+        self.posy = posy
+
+        self.powerType = powerType
+        self.speed = 4
+        self.radius = 12
+
+        self.rect = pygame.Rect(
+            posx - self.radius,
+            posy - self.radius,
+            self.radius * 2,
+            self.radius * 2
+        )
+
+        self.colors = {
+            "wide": BLUE,
+            "slow": YELLOW,
+            "life": RED
+        }
+
+        self.symbols = {
+            "wide": "W",
+            "slow": "S",
+            "life": "+"
+        }
+
+    def update(self):
+        self.posy += self.speed
+
+        self.rect.center = (
+            int(self.posx), int(self.posy)
+        )
+
+    def display(self):
+        pygame.draw.circle(
+            screen,
+            self.colors[self.powerType],
+            self.rect.center,
+            self.radius
+        )
+
+        text = font.render(
+            self.symbols[self.powerType],
+            True,
+            BLACK
+        )
+
+        screen.blit(
+            text,
+            text.get_rect(center=self.rect.center)
+        )
+
+    def getRect(self):
+        return self.rect
