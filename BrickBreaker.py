@@ -70,44 +70,6 @@ class Striker:
     def getRect(self):
         return self.strikerRect
 
-
-# =====================================
-# BLOCK CLASS
-# =====================================
-
-class Block:
-
-    def __init__(self, posx, posy, width, height, color):
-        self.posx, self.posy = posx, posy
-        self.width, self.height = width, height
-        self.color = color
-
-        self.damage = 100
-
-        if color == WHITE:
-            self.health = 200
-        else:
-            self.health = 100
-
-        self.blockRect = pygame.Rect(
-            self.posx, self.posy, self.width, self.height
-        )
-
-    def display(self):
-        if self.health > 0:
-            pygame.draw.rect(
-                screen, self.color, self.blockRect
-            )
-
-    def hit(self):
-        self.health -= self.damage
-
-    def getRect(self):
-        return self.blockRect
-
-    def getHealth(self):
-        return self.health
-
 class Ball:
 
     def __init__(self, posx, posy, radius, speed, color):
@@ -189,6 +151,40 @@ class Ball:
 
         return self.ball
 
+
+class Block:
+
+    def __init__(self, posx, posy, width, height, color):
+        self.posx, self.posy = posx, posy
+        self.width, self.height = width, height
+        self.color = color
+
+        self.damage = 100
+
+        if color == WHITE:
+            self.health = 200
+        else:
+            self.health = 100
+
+        self.blockRect = pygame.Rect(
+            self.posx, self.posy, self.width, self.height
+        )
+
+    def display(self):
+        if self.health > 0:
+            pygame.draw.rect(
+                screen, self.color, self.blockRect
+            )
+
+    def hit(self):
+        self.health -= self.damage
+
+    def getRect(self):
+        return self.blockRect
+
+    def getHealth(self):
+        return self.health
+
 class PowerUp:
 
     def __init__(self, posx, posy, powerType):
@@ -246,3 +242,4 @@ class PowerUp:
 
     def getRect(self):
         return self.rect
+
